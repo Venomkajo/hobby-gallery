@@ -1,0 +1,21 @@
+{% extends "layout.html" %}
+
+{% block title %}Home - Hobby Horse Gallery{% endblock %}
+
+{% block main %}
+    <form action="/upload" id="submitfile" method="post" enctype="multipart/form-data">
+        <label for="file-upload" class="custom-file-upload">
+            <input type="file" id="file-upload" name="image" accept="image/*"> Choose a photo.
+        </label>
+        <div>
+            <button class="submitbtn" type="submit"> Upload! </button>
+        </div>
+    </form>
+
+    <div class="faqupload">
+        <p> Here's where you can submit your own hobby horse! You can submit a photo of any resolution of any size.
+            Feel free to take your place in this gallery. 
+        </p>
+    </div>
+    
+{% endblock %}

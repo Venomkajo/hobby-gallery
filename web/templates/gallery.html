@@ -1,0 +1,10 @@
+{% extends "layout.html" %}
+
+{% block title %}Home - Hobby Horse Gallery{% endblock %}
+
+{% block main %}
+    <div class="gallery">
+        {% for picture in picture_files %}
+            <img class="image-container"  src="{{ url_for('static', filename='pictures/' + picture) }}" alt="{{ picture }}">
+        {% endfor %}
+{% endblock %}
