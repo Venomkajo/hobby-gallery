@@ -16,6 +16,10 @@ app.config["SESSION_PERMANENT"] = True
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
+#Set upload folder
+app.config['UPLOAD_FOLDER'] = 'static/pictures'
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -27,7 +31,7 @@ def get_gallery():
 
 @app.route('/upload', methods=["GET", "POST"])
 def upload():
-
+    
     if session.get("user_id") is None:
         text = "please login"
         return redirect("/login")
@@ -49,6 +53,8 @@ def upload():
         gender = request.form['gender']
 
         unique_filename = str(uuid.uuid4()) + os.path.splitext(image.filename)[1]
+
+        image.stream.seek(0)
 
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
         image.save(file_path)
