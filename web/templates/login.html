@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+
+{% block title %}Home - Hobby Horse Gallery{% endblock %}
+
+{% block main %}
+    <div class="center">
+        <h1> Login </h1>
+        <form action="/login" method="post" id="loginform" name="login">
+            <input type="text" name="username" placeholder="Username" autocomplete="off">
+            <input type="text" name="password" placeholder="Password" autocomplete="off">
+            <button type="submit"> Login </button>
+        </form>
+        <h3> Don't have a account? Click <a href="/register">here</a>.</h3>
+    </div>
+    
+{% endblock %}

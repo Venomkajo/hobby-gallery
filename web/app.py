@@ -1,8 +1,9 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect
 app = Flask(__name__)
 import os
 import cs50
 import magic
+from werkzeug.security import generate_password_hash
 from helpers import check_image
 
 db = cs50.SQL("sqlite:///gallery.db")
@@ -35,6 +36,41 @@ def upload():
 
 
     return render_template('upload.html')
+
+@app.route('/login', methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        pass
+
+    return render_template('login.html')
+
+@app.route('/register', methods=["GET", "POST"])
+def register():
+    if request.method =="POST":
+        username = request.form['username']
+        password = request.form['password']
+        confirm = request.form['confirm']
+
+        if not username:
+            return 'Please enter a username'
+        elif not password:
+            return 'Please enter a password'
+        elif not confirm:
+            return 'Please confirm the password'
+        elif len(password) < 8:
+            return 'Password must be at least 8 characters long'
+        elif password != confirm:
+            return 'Passwords do not match'
+        elif db.execute("SELECT username FROM users WHERE username = ?", username):
+            return 'Username is taken'
+
+        hashed_password = generate_password_hash(password)
+        
+        db.execute("INSERT INTO users (username, password) VALUES (?, ?)", username, hashed_password)
+
+        return redirect("/login")
+
+    return render_template('register.html')
 
 @app.route('/contact')
 def contact():
