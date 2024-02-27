@@ -1,15 +1,16 @@
 from flask import Flask, render_template, request, redirect, session
 from flask_session import Session
 import os
-import cs50
+import uuid
+from cs50 import SQL
 import magic
 from werkzeug.security import generate_password_hash, check_password_hash
 from helpers import check_image
 app = Flask(__name__)
 
-db = cs50.SQL("sqlite:///gallery.db")
+db = SQL("sqlite:///gallery.db")
 db.execute("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT, password TEXT)")
-db.execute("CREATE TABLE IF NOT EXISTS images (image_id INTEGER PRIMARY KEY, user_id INTEGER, image BLOB, title TEXT, description TEXT, gender TEXT, FOREIGN KEY (user_id) REFERENCES users(id))")
+db.execute("CREATE TABLE IF NOT EXISTS images (image_id INTEGER PRIMARY KEY, user_id INTEGER, image TEXT, title TEXT, description TEXT, gender TEXT, FOREIGN KEY (user_id) REFERENCES users(id))")
 
 app.config["SESSION_PERMANENT"] = True
 app.config["SESSION_TYPE"] = "filesystem"
@@ -28,6 +29,7 @@ def get_gallery():
 def upload():
 
     if session.get("user_id") is None:
+        text = "please login"
         return redirect("/login")
 
     if request.method == ("POST"):
@@ -41,16 +43,32 @@ def upload():
         
         if check_image(image) == False:
             return 'not an image'
+        
+        name = request.form['name']
+        description = request.form['description']
+        gender = request.form['gender']
 
+        unique_filename = str(uuid.uuid4()) + os.path.splitext(image.filename)[1]
+
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+        image.save(file_path)
+
+        if not (name and description and gender):
+            return 'please fill out all fields'
+        
+        db.execute('INSERT INTO images (user_id, image, title, description, gender) VALUES (?, ?, ?, ?, ?)', session["user_id"], unique_filename, name, description, gender)
+
+        return redirect('/')
 
     return render_template('upload.html')
 
 @app.route('/login', methods=["GET", "POST"])
 def login():
 
-    session.clear()
-
     if request.method == "POST":
+
+        session.clear()
+
         username = request.form['username']
         password = request.form['password']
 
@@ -74,6 +92,9 @@ def login():
 @app.route('/register', methods=["GET", "POST"])
 def register():
     if request.method =="POST":
+
+        session.clear()
+
         username = request.form['username']
         password = request.form['password']
         confirm = request.form['confirm']

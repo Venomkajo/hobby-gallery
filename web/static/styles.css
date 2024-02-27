@@ -106,6 +106,20 @@ img
 .center
 {
     text-align: center;
-    font-size: larger;
+    font-size: large;
     margin-top: 50px;
+}
+
+.big-input {
+    vertical-align: top;
+    margin-top: 10px;
+    padding: 10px;
+    width: 300px;
+    height: 50px;
+    font-size: larger;
+}
+
+#gender
+{
+    margin: auto;
 }

@@ -7,6 +7,21 @@
         <label for="file-upload" class="custom-file-upload">
             <input type="file" id="file-upload" name="image" accept="image/*"> Choose a photo.
         </label>
+        <div id="image-container">
+        </div>
+        <div>
+            <input class="center" type="text" name="name" autocomplete="off" placeholder="Name">
+            <div>
+                <input class="big-input" type="text" name="description" autocomplete="off" placeholder="Description">
+            </div>
+            <label>Gender</label>
+            <select name="gender">
+                <option value="blank" hidden selected>-</option>
+                <option value="Mare">Mare</option>
+                <option value="Stallion">Stallion</option>
+                <option value="">N/A</option>
+            </select>
+        </div>
         <div>
             <button class="submitbtn" type="submit"> Upload! </button>
         </div>
@@ -17,5 +32,22 @@
             Feel free to take your place in this gallery. 
         </p>
     </div>
+
+    <script>
+        document.getElementById('file-upload').addEventListener('change', function(event) {
+        var file = event.target.files[0];
+        var reader = new FileReader();
+
+        reader.onload = function(event) {
+            var imgElement = document.createElement('img');
+            imgElement.src = event.target.result;
+            imgElement.style.maxWidth = '100%'; // Ensure the image fits within the container
+            document.getElementById('image-container').innerHTML = ''; // Clear previous image if any
+            document.getElementById('image-container').appendChild(imgElement);
+        };
+
+        reader.readAsDataURL(file);
+    });
+    </script>
     
 {% endblock %}
