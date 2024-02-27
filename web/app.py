@@ -1,15 +1,19 @@
-from flask import Flask, render_template, request, redirect
-app = Flask(__name__)
+from flask import Flask, render_template, request, redirect, session
+from flask_session import Session
 import os
 import cs50
 import magic
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 from helpers import check_image
+app = Flask(__name__)
 
 db = cs50.SQL("sqlite:///gallery.db")
 db.execute("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT, password TEXT)")
-db.execute("CREATE TABLE IF NOT EXISTS images (image_id INTEGER PRIMARY KEY, user_id INTEGER, image BLOB, FOREIGN KEY (user_id) REFERENCES users(id))")
+db.execute("CREATE TABLE IF NOT EXISTS images (image_id INTEGER PRIMARY KEY, user_id INTEGER, image BLOB, title TEXT, description TEXT, gender TEXT, FOREIGN KEY (user_id) REFERENCES users(id))")
 
+app.config["SESSION_PERMANENT"] = True
+app.config["SESSION_TYPE"] = "filesystem"
+Session(app)
 
 @app.route('/')
 def index():
@@ -22,6 +26,10 @@ def get_gallery():
 
 @app.route('/upload', methods=["GET", "POST"])
 def upload():
+
+    if session.get("user_id") is None:
+        return redirect("/login")
+
     if request.method == ("POST"):
         if 'image' not in request.files:
             return 'form error'
@@ -39,8 +47,27 @@ def upload():
 
 @app.route('/login', methods=["GET", "POST"])
 def login():
+
+    session.clear()
+
     if request.method == "POST":
-        pass
+        username = request.form['username']
+        password = request.form['password']
+
+        if not username:
+            return 'Please enter a username'
+        elif not password:
+            return 'Please enter a password'
+        
+        hashed_password = generate_password_hash(password)
+
+        rows = db.execute("SELECT * FROM users WHERE username = ?", username)
+        
+        if not rows or not check_password_hash(rows[0]["password"], password):
+                return "invalid username and/or password"
+        
+        session["user_id"] = rows[0]["id"]
+        return redirect('/')
 
     return render_template('login.html')
 
@@ -77,4 +104,4 @@ def contact():
     return render_template('contact.html')
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
