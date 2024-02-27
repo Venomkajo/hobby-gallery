@@ -49,12 +49,6 @@ body
     font-family: Arial, sans-serif;
 }
 
-.gallery {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-}
-
 .image-container {
     margin: 5px;
 }
@@ -122,4 +116,35 @@ img
 #gender
 {
     margin: auto;
+}
+
+.gallery 
+{
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.galleryrow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid black;
+    margin-bottom: 20px;
+}
+
+.galleryrow h2 {
+    font-size: 1.5rem;
+    margin-bottom: 5px;
+}
+
+.galleryrow p {
+    margin: 5px 0;
+}
+
+.galleryrow img {
+    max-width: 100%;
+    height: auto;
+    margin-top: 10px;
 }

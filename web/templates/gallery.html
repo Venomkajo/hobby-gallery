@@ -11,9 +11,52 @@
                 <h2>{{ file.title }}</h2>
                 <p>Description: {{ file.description }}</p>
                 <p>Gender: {{ file.gender }}</p>
+                <p>Submitted by: {{ file.username }}</p>
                 <img src="{{ url_for('static', filename=file.image) }}" alt="{{ file.title }}">
+                <div class="upvotes">
+                <button class="upvote-btn" data-file-id="{{ file.image_id }}">Upvote</button>
+                <p>Rating: <span class="rating">{{ get_image_rating(file.image_id) }}</span></p>
+                </div>
             </div>
+            {% for review in reviews %}
+                <div class="review">
+                    <p> {{ review.comment }}</p>
+                </div>
+            {% endfor %}
             {% endif %}
         {% endif %}
     {% endfor %}
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const upvoteBtns = document.querySelectorAll(".upvote-btn");
+
+            upvoteBtns.forEach(function(btn) {
+                btn.addEventListener("click", function() {
+                    const fileId = this.dataset.fileId;
+
+                    fetch('/upvote', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            fileId: fileId
+                        })
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            // Update the UI or display a message indicating successful upvote
+                            console.log('Upvoted successfully');
+                        } else {
+                            console.error('Failed to upvote');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+                });
+            });
+        });    
+    </script>
+
 {% endblock %}

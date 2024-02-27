@@ -1,17 +1,18 @@
-from flask import Flask, render_template, request, redirect, session
+from flask import Flask, render_template, request, redirect, session, jsonify
 from flask_session import Session
 import os
 import uuid
 from cs50 import SQL
 import magic
 from werkzeug.security import generate_password_hash, check_password_hash
-from helpers import check_image
+from helpers import check_image, get_image_rating
 app = Flask(__name__)
 
 #connect to database
 db = SQL("sqlite:///gallery.db")
 db.execute("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT, password TEXT)")
 db.execute("CREATE TABLE IF NOT EXISTS images (image_id INTEGER PRIMARY KEY, user_id INTEGER, image TEXT, title TEXT, description TEXT, gender TEXT, FOREIGN KEY (user_id) REFERENCES users(id))")
+db.execute("CREATE TABLE IF NOT EXISTS reviews (review_id INTEGER PRIMARY KEY, image_id INTEGER, user_id INTEGER, rating INTEGER DEFAULT 0, comment TEXT, FOREIGN KEY (image_id) REFERENCES images(image_id), FOREIGN KEY (user_id) REFERENCES users(id))")
 
 app.config["SESSION_PERMANENT"] = True
 app.config["SESSION_TYPE"] = "filesystem"
@@ -21,14 +22,17 @@ Session(app)
 app.config['UPLOAD_FOLDER'] = 'static'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
+#main page
 @app.route('/')
 def index():
     return render_template('index.html')
 
+#gallery page
 @app.route('/gallery')
 def gallery():
-    files = db.execute("SELECT * FROM images JOIN users ON id = user_id ORDER BY image_id DESC")
-    return render_template('gallery.html', files=files, image_exist=image_exist)
+    files = db.execute("SELECT * FROM images JOIN users ON users.id = images.user_id ORDER BY images.image_id DESC")
+    reviews = db.execute("SELECT * FROM reviews ORDER BY image_id DESC")
+    return render_template('gallery.html', files=files, image_exist=image_exist, reviews=reviews, get_image_rating=get_image_rating)
 
 @app.route('/upload', methods=["GET", "POST"])
 def upload():
@@ -127,9 +131,30 @@ def register():
 
     return render_template('register.html')
 
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect('/')
+
 @app.route('/contact')
 def contact():
     return render_template('contact.html')
+
+@app.route('/upvote', methods=['POST'])
+def upvote():
+    if request.method == 'POST':
+        # Get the file ID from the request data
+        try:
+            data = request.get_json()
+            file_id = data['fileId']
+
+            # Update the SQL table
+            db.execute("UPDATE reviews SET rating = rating + 1 WHERE image_id = ?", file_id)
+
+            # Respond with JSON indicating success
+            return jsonify({'message': 'Upvoted successfully'}), 200
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
 
 def image_exist(image):
     return os.path.exists(os.path.join(app.config['UPLOAD_FOLDER'], image))
