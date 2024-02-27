@@ -8,6 +8,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from helpers import check_image
 app = Flask(__name__)
 
+#connect to database
 db = SQL("sqlite:///gallery.db")
 db.execute("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT, password TEXT)")
 db.execute("CREATE TABLE IF NOT EXISTS images (image_id INTEGER PRIMARY KEY, user_id INTEGER, image TEXT, title TEXT, description TEXT, gender TEXT, FOREIGN KEY (user_id) REFERENCES users(id))")
@@ -17,7 +18,7 @@ app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
 #Set upload folder
-app.config['UPLOAD_FOLDER'] = 'static/pictures'
+app.config['UPLOAD_FOLDER'] = 'static'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 @app.route('/')
@@ -25,9 +26,9 @@ def index():
     return render_template('index.html')
 
 @app.route('/gallery')
-def get_gallery():
-    picture_files = os.listdir('static/pictures')
-    return render_template('gallery.html', picture_files=picture_files)
+def gallery():
+    files = db.execute("SELECT * FROM images JOIN users ON id = user_id ORDER BY image_id DESC")
+    return render_template('gallery.html', files=files, image_exist=image_exist)
 
 @app.route('/upload', methods=["GET", "POST"])
 def upload():
@@ -129,6 +130,9 @@ def register():
 @app.route('/contact')
 def contact():
     return render_template('contact.html')
+
+def image_exist(image):
+    return os.path.exists(os.path.join(app.config['UPLOAD_FOLDER'], image))
 
 if __name__ == "__main__":
     app.run(debug=True)

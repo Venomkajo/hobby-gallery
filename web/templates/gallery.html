@@ -4,7 +4,16 @@
 
 {% block main %}
     <div class="gallery">
-        {% for picture in picture_files %}
-            <img class="image-container"  src="{{ url_for('static', filename='pictures/' + picture) }}" alt="{{ picture }}">
-        {% endfor %}
+        {% for file in files %}
+        {% if file.image.endswith('.jpg') or file.image.endswith('.jpeg') or file.image.endswith('.png') %}
+            {% if image_exist(file.image) %}
+            <div class="galleryrow">
+                <h2>{{ file.title }}</h2>
+                <p>Description: {{ file.description }}</p>
+                <p>Gender: {{ file.gender }}</p>
+                <img src="{{ url_for('static', filename=file.image) }}" alt="{{ file.title }}">
+            </div>
+            {% endif %}
+        {% endif %}
+    {% endfor %}
 {% endblock %}
