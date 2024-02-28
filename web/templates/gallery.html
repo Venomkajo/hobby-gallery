@@ -47,6 +47,10 @@
                         if (response.ok) {
                             // Update the UI or display a message indicating successful upvote
                             console.log('Upvoted successfully');
+                            console.log(response.updated_rating)
+                            // Update the UI with the new rating
+                            const ratingSpan = this.parentNode.querySelector(".rating");
+                            ratingSpan.textContent = "Refresh the page to see it update";
                         } else {
                             console.error('Failed to upvote');
                         }
