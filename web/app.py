@@ -35,7 +35,7 @@ def gallery():
     files = db.execute("SELECT * FROM images JOIN users ON users.id = images.user_id ORDER BY images.image_id DESC")
     reviews = db.execute("SELECT * FROM reviews ORDER BY image_id DESC")
 
-    return render_template('gallery.html', files=files, image_exist=image_exist, reviews=reviews, get_image_rating=get_image_rating)
+    return render_template('gallery.html', files=files, image_exist=image_exist, reviews=reviews, get_image_rating=get_image_rating, vote_check=vote_check)
 
 #handle uploading file
 @app.route('/upload', methods=["GET", "POST"])
@@ -160,14 +160,24 @@ def upvote():
         try:
             data = request.get_json()
             file_id = data['fileId']
+            user_id = session["user_id"]
+            test = db.execute("SELECT * FROM upvotes WHERE user_id = ? AND image_id = ?", user_id, file_id)
 
             # Update the SQL table
+            if test:
+                print("passed SELECT test")
+            else:
+                print("failed SELECT test")
+                print(user_id)
+                db.execute("INSERT INTO upvotes(user_id, image_id) VALUES (?, ?)", user_id, file_id)
+
             db.execute("UPDATE images SET upvotes = upvotes + 1 WHERE image_id = ?", file_id)
 
             updated_rating = get_image_rating(file_id)
+            value = {'rating': updated_rating}
 
             # Respond with JSON indicating success
-            return jsonify({'rating': updated_rating}), 200
+            return jsonify(value), 200
         except Exception as e:
             return jsonify({'error': str(e)}), 500
         
@@ -175,6 +185,14 @@ def upvote():
 #check if image exists
 def image_exist(image):
     return os.path.exists(os.path.join(app.config['UPLOAD_FOLDER'], image))
+
+def vote_check(id):
+    user_id = session["user_id"]
+    query = db.execute("SELECT * FROM upvotes WHERE user_id = ? AND image_id = ?", user_id, id)
+    if query:
+        return False
+    else:
+        return True
 
 #run app as debug
 if __name__ == "__main__":

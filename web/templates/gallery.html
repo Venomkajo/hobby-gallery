@@ -14,8 +14,10 @@
                 <p>Submitted by: {{ file.username }}</p>
                 <img src="{{ url_for('static', filename=file.image) }}" alt="{{ file.title }}">
                 <div class="upvotes">
-                <button class="upvote-btn" data-file-id="{{ file.image_id }}">Upvote</button>
-                <p>Rating: <span class="rating">{{ get_image_rating(file.image_id) }}</span></p>
+                {% if vote_check(file.image_id) %}
+                <button class="upvote-btn" id="btn-{{file.image_id}}" data-file-id="{{ file.image_id }}">Upvote</button>
+                {% endif %}
+                <p>Likes: <span class="rating">{{ get_image_rating(file.image_id) }}</span></p>
                 </div>
             </div>
             {% for review in reviews %}
@@ -45,12 +47,12 @@
                     })
                     .then(response => {
                         if (response.ok) {
+                            btn = document.getElementById('btn-' + fileId).style.display = "none";
                             // Update the UI or display a message indicating successful upvote
                             console.log('Upvoted successfully');
-                            console.log(response.updated_rating)
                             // Update the UI with the new rating
                             const ratingSpan = this.parentNode.querySelector(".rating");
-                            ratingSpan.textContent = "Refresh the page to see it update";
+                            ratingSpan.textContent = "Refresh the page!";
                         } else {
                             console.error('Failed to upvote');
                         }
