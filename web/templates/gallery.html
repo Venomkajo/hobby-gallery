@@ -14,17 +14,25 @@
                 <p>Submitted by: {{ file.username }}</p>
                 <img src="{{ url_for('static', filename=file.image) }}" alt="{{ file.title }}">
                 <div class="upvotes">
-                {% if vote_check(file.image_id) %}
-                <button class="upvote-btn" id="btn-{{file.image_id}}" data-file-id="{{ file.image_id }}">Upvote</button>
-                {% endif %}
-                <p>Likes: <span class="rating">{{ get_image_rating(file.image_id) }}</span></p>
+                    {% if user_id != 0 %}
+                        {% if vote_check(file.image_id) %}
+                            <button class="upvote-btn" id="btn-{{file.image_id}}" data-file-id="{{ file.image_id }}">Upvote</button>
+                        {% endif %}
+                            <form action="/comment" method="post">
+                                <input type="hidden" name="comment_id" value="{{ file.image_id }}">
+                                <input type="text" placeholder="Comment" name="comment" id="{{ file.image_id }}" autocomplete='off'>
+                            </form>
+                    {% endif %}
+                    <p>Likes: <span class="rating">{{ get_image_rating(file.image_id) }}</span></p>
+                    {% if get_comment(file.image_id) %}
+                        {% for comments in get_comment(file.image_id) %}
+                            <div class="review">
+                                <p> {{ comments['username'] }}: {{ comments['comment'] }}</p>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
                 </div>
             </div>
-            {% for review in reviews %}
-                <div class="review">
-                    <p> {{ review.comment }}</p>
-                </div>
-            {% endfor %}
             {% endif %}
         {% endif %}
     {% endfor %}

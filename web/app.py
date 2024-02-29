@@ -12,7 +12,7 @@ app = Flask(__name__)
 db = SQL("sqlite:///gallery.db")
 db.execute("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT, password TEXT)")
 db.execute("CREATE TABLE IF NOT EXISTS images (image_id INTEGER PRIMARY KEY, user_id INTEGER, image TEXT, title TEXT, description TEXT, gender TEXT, upvotes INTEGER DEFAULT 0, FOREIGN KEY (user_id) REFERENCES users(id))")
-db.execute("CREATE TABLE IF NOT EXISTS reviews (review_id INTEGER PRIMARY KEY, image_id INTEGER, user_id INTEGER, rating INTEGER DEFAULT 0, comment TEXT, FOREIGN KEY (image_id) REFERENCES images(image_id), FOREIGN KEY (user_id) REFERENCES users(id))")
+db.execute("CREATE TABLE IF NOT EXISTS reviews (review_id INTEGER PRIMARY KEY, image_id INTEGER, user_id INTEGER, comment TEXT, FOREIGN KEY (image_id) REFERENCES images(image_id), FOREIGN KEY (user_id) REFERENCES users(id))")
 db.execute("CREATE TABLE IF NOT EXISTS upvotes (user_id INTEGER, image_id INTEGER, FOREIGN KEY (user_id) REFERENCES users(id), FOREIGN KEY (image_id) REFERENCES images(image_id))")
 
 #make cookies
@@ -33,9 +33,12 @@ def index():
 @app.route('/gallery')
 def gallery():
     files = db.execute("SELECT * FROM images JOIN users ON users.id = images.user_id ORDER BY images.image_id DESC")
-    reviews = db.execute("SELECT * FROM reviews ORDER BY image_id DESC")
+    if session.get("user_id"):
+        user_id = session['user_id']
+    else:
+        user_id = 0
 
-    return render_template('gallery.html', files=files, image_exist=image_exist, reviews=reviews, get_image_rating=get_image_rating, vote_check=vote_check)
+    return render_template('gallery.html', files=files, image_exist=image_exist, get_image_rating=get_image_rating, vote_check=vote_check, user_id=user_id, get_comment=get_comment)
 
 #handle uploading file
 @app.route('/upload', methods=["GET", "POST"])
@@ -180,7 +183,24 @@ def upvote():
             return jsonify(value), 200
         except Exception as e:
             return jsonify({'error': str(e)}), 500
-        
+
+
+@app.route("/comment", methods=["POST"])
+def add_comment():
+    comment = request.form['comment']
+    image_id = request.form['comment_id']
+
+    if not comment:
+        return 'empty comment'
+    if not image_id:
+        return 'image_id error'
+    if not session['user_id']:
+        return 'please login'
+    
+    db.execute("INSERT INTO reviews (image_id, user_id, comment) VALUES (?, ?, ?)", image_id, session['user_id'], comment)
+
+    return redirect('/')
+    
 
 #check if image exists
 def image_exist(image):
@@ -193,6 +213,18 @@ def vote_check(id):
         return False
     else:
         return True
+    
+def get_comment(id):
+    query = db.execute("SELECT * FROM reviews WHERE image_id = ?", id)
+    if query:
+        comments = []
+        for answers in query:
+            username = db.execute("SELECT username FROM users WHERE id = ?", answers['user_id'])
+            dictionary = {'comment': answers['comment'], 'username': username}
+            comments.append(dictionary)
+        return comments
+    else:
+        return False
 
 #run app as debug
 if __name__ == "__main__":
