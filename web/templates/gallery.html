@@ -3,6 +3,17 @@
 {% block title %}Gallery - Hobby Horse Gallery{% endblock %}
 
 {% block main %}
+    <form action="/gallery" method="post" class="center" style="margin-bottom: 30px;">
+        <h4>Sort by:</h4>
+        <select name="sort">
+            <option value="newest">Newest</option>
+            <option value="oldest">Oldest</option>
+            <option value="upvoted">Most Votes</option>
+            <option value="random">Random</option>
+        </select>
+        <input name="search" autocomplete="off" placeholder="Search...">
+        <button type="submit">Sort/Search</button>
+    </form>
     <div class="gallery">
         {% for file in files %}
         {% if file.image.endswith('.jpg') or file.image.endswith('.jpeg') or file.image.endswith('.png') %}
@@ -35,7 +46,7 @@
                             </div>
                         {% endfor %}
                     {% endif %}
-                    {% if file.username == 'admin' %}
+                    {% if user_id == 1 %}
                         <form action="/delete" method="post">
                             <input hidden value="{{ file.image_id }}" name="delete_id" >
                             <button type="submit">Delete</button>

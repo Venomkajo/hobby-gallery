@@ -8,41 +8,74 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from helpers import check_image, get_image_rating
 app = Flask(__name__)
 
-#connect to database
+# connect to database
 db = SQL("sqlite:///gallery.db")
 db.execute("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT, password TEXT)")
 db.execute("CREATE TABLE IF NOT EXISTS images (image_id INTEGER PRIMARY KEY, user_id INTEGER, image TEXT, title TEXT, description TEXT, gender TEXT, upvotes INTEGER DEFAULT 0, FOREIGN KEY (user_id) REFERENCES users(id))")
 db.execute("CREATE TABLE IF NOT EXISTS reviews (review_id INTEGER PRIMARY KEY, image_id INTEGER, user_id INTEGER, comment TEXT, FOREIGN KEY (image_id) REFERENCES images(image_id) ON DELETE CASCADE, FOREIGN KEY (user_id) REFERENCES users(id))")
 db.execute("CREATE TABLE IF NOT EXISTS upvotes (user_id INTEGER, image_id INTEGER, FOREIGN KEY (user_id) REFERENCES users(id), FOREIGN KEY (image_id) REFERENCES images(image_id) ON DELETE CASCADE)")
 
-#make cookies
+# make cookies
 app.config["SESSION_PERMANENT"] = True
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
-#Set upload folder
+# set upload folder
 app.config['UPLOAD_FOLDER'] = 'static'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 logged_in = False
 
-#main page
+# main page
 @app.route('/')
 def index():
     return render_template('index.html')
 
-#gallery page
-@app.route('/gallery')
+# gallery page
+@app.route('/gallery', methods=["GET", "POST"])
 def gallery():
-    files = db.execute("SELECT * FROM images JOIN users ON users.id = images.user_id ORDER BY images.image_id DESC")
+    sort = 'newest'
+    search = ''
+
+    if request.method == "POST":
+        
+        if request.form['sort']:
+            sort = request.form['sort']
+        if request.form['search']:
+            search = request.form['search']
+
     if session.get("user_id"):
         user_id = session['user_id']
     else:
         user_id = 0
 
+    if sort == 'newest':
+        files = db.execute("SELECT * FROM images JOIN users ON users.id = images.user_id ORDER BY images.image_id DESC")
+    elif sort == 'oldest':
+        files = db.execute("SELECT * FROM images JOIN users ON users.id = images.user_id ORDER BY images.image_id ASC")
+    elif sort == 'upvoted':
+        files = db.execute("SELECT * FROM images JOIN users ON users.id = images.user_id ORDER BY images.upvotes DESC")
+    elif sort == 'random':
+        files = db.execute("SELECT * FROM images JOIN users ON users.id = images.user_id ORDER BY RANDOM()")
+    else:
+        return "sorting error"
+    
+    if search:
+        formatted_search = '%{}%'.format(search)
+        files = db.execute("SELECT * FROM images JOIN users ON users.id = images.user_id WHERE title LIKE ? ORDER BY images.image_id DESC", formatted_search)
+
     return render_template('gallery.html', files=files, image_exist=image_exist, get_image_rating=get_image_rating, vote_check=vote_check, user_id=user_id, get_comment=get_comment)
 
-#handle uploading file
+@app.route('/search')
+def search():
+
+    files = db.execute("SELECT * FROM images JOIN users ON users.id = images.user_id ORDER BY images.image_id DESC")
+    for file in files:
+        file = file['title']
+
+    return render_template('search.html', files=files)
+
+# handle uploading file
 @app.route('/upload', methods=["GET", "POST"])
 def upload():
     
@@ -66,15 +99,15 @@ def upload():
         description = request.form['description']
         gender = request.form['gender']
 
-        #generate a filename
+        # generate a filename
         unique_filename = str(uuid.uuid4()) + os.path.splitext(image.filename)[1]
-        #go to top of file
+        # go to top of file
         image.stream.seek(0)
 
         if not (name and description and gender):
             return 'please fill out all fields'
 
-        #save file in /static/
+        # save file in /static/
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
         image.save(file_path)
 
@@ -84,7 +117,7 @@ def upload():
 
     return render_template('upload.html')
 
-#login
+# login
 @app.route('/login', methods=["GET", "POST"])
 def login():
 
@@ -100,12 +133,12 @@ def login():
         elif not password:
             return 'Please enter a password'
         
-        #generate secure password
+        # generate secure password
         hashed_password = generate_password_hash(password)
 
         rows = db.execute("SELECT * FROM users WHERE username = ?", username)
         
-        #check if password is correct and user exists
+        # check if password is correct and user exists
         if not rows or not check_password_hash(rows[0]["password"], password):
                 return "invalid username and/or password"
         
@@ -114,20 +147,20 @@ def login():
 
     return render_template('login.html')
 
-#handle register
+# handle register
 @app.route('/register', methods=["GET", "POST"])
 def register():
     if request.method =="POST":
 
-        #clear cookies
+        # clear cookies
         session.clear()
 
-        #get form
+        # get form
         username = request.form['username']
         password = request.form['password']
         confirm = request.form['confirm']
 
-        #check if empty
+        # check if empty
         if not username:
             return 'Please enter a username'
         elif not password:
@@ -149,18 +182,18 @@ def register():
 
     return render_template('register.html')
 
-#clear cookies
+# clear cookies
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect('/')
 
-#contact page
+# contact page
 @app.route('/contact')
 def contact():
     return render_template('contact.html')
 
-#upvote a post
+# upvote a post
 @app.route('/upvote', methods=['POST'])
 def upvote():
     if request.method == 'POST':
@@ -187,14 +220,14 @@ def upvote():
         except Exception as e:
             return jsonify({'error': str(e)}), 500
 
-#add comment to image
+# add comment to image
 @app.route("/comment", methods=["POST"])
 def add_comment():
-    #get form
+    # get form
     comment = request.form['comment']
     image_id = request.form['comment_id']
 
-    #check if empty
+    # check if empty
     if not comment:
         return 'empty comment'
     if not image_id:
@@ -202,24 +235,27 @@ def add_comment():
     if not session['user_id']:
         return 'please login'
     
-    #insert into reviews table
+    # insert into reviews table
     db.execute("INSERT INTO reviews (image_id, user_id, comment) VALUES (?, ?, ?)", image_id, session['user_id'], comment)
 
     return redirect('/gallery')
 
-#delete image, only for admins
+# delete image, only for admins
 @app.route("/delete", methods=["POST"])
 def delete_image():
     del_id = request.form['delete_id']
-    db.execute("DELETE FROM images WHERE image_id = ?", del_id)
+    if db.execute("SELECT * FROM images WHERE image_id = ?", del_id):
+        db.execute("DELETE FROM images WHERE image_id = ?", del_id)
+    else:
+        return "image already deleted"
     return redirect("/")
     
 
-#check if image exists
+# check if image exists
 def image_exist(image):
     return os.path.exists(os.path.join(app.config['UPLOAD_FOLDER'], image))
 
-#check if user already upvoted an image
+# check if user already upvoted an image
 def vote_check(id):
     user_id = session["user_id"]
     query = db.execute("SELECT * FROM upvotes WHERE user_id = ? AND image_id = ?", user_id, id)
@@ -228,7 +264,7 @@ def vote_check(id):
     else:
         return True
 
-#get comments from reviews table for image    
+# get comments from reviews table for image    
 def get_comment(id):
     query = db.execute("SELECT * FROM reviews WHERE image_id = ?", id)
     if query:
@@ -241,7 +277,7 @@ def get_comment(id):
     else:
         return False
 
-# Define a context processor to inject variables into all templates
+# define a context processor to inject variables into all templates
 @app.context_processor
 def inject_layout():
     if 'user_id' in session:
@@ -251,6 +287,6 @@ def inject_layout():
     return dict(logged_in=logged_in)
 
 
-#run app as debug
+# run app as debug
 if __name__ == "__main__":
     app.run(debug=True)
