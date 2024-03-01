@@ -205,4 +205,13 @@ input
     border-radius: 5px;
     background-color: #fff;
     margin: auto;
-  }
+}
+
+.error
+{
+    font-size: x-large; 
+    color: red;
+    text-align: center;
+    font-size: x-large;
+    margin-top: 50px;
+}

@@ -11,7 +11,8 @@
             <option value="upvoted">Most Votes</option>
             <option value="random">Random</option>
         </select>
-        <input name="search" autocomplete="off" placeholder="Search...">
+        <input name="search" autocomplete="off" placeholder="Search by name.">
+        <input name="user_search" autocomplete="off" placeholder="Search by username.">
         <button type="submit">Sort/Search</button>
     </form>
     <div class="gallery">
@@ -50,6 +51,10 @@
                         <form action="/delete" method="post">
                             <input hidden value="{{ file.image_id }}" name="delete_id" >
                             <button type="submit">Delete</button>
+                        </form>
+                        <form action="/ban_user" method="post">
+                            <input hidden value="{{ file.username }}" name="ban_username">
+                            <button type="submit" onclick="return confirm('Are you sure you want to ban this user?')">Ban user</button>
                         </form>
                     {% endif %}
                 </div>

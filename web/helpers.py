@@ -9,6 +9,7 @@ def check_image(image):
     file_mime_type = mime.from_buffer(image.read())
     return file_mime_type.startswith('image/')
 
+
 #get current image rating
 def get_image_rating(id):
     rating = db.execute("SELECT upvotes FROM images WHERE image_id = ?", id)
