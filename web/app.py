@@ -24,6 +24,8 @@ Session(app)
 app.config['UPLOAD_FOLDER'] = 'static'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
+logged_in = False
+
 #main page
 @app.route('/')
 def index():
@@ -117,12 +119,15 @@ def login():
 def register():
     if request.method =="POST":
 
+        #clear cookies
         session.clear()
 
+        #get form
         username = request.form['username']
         password = request.form['password']
         confirm = request.form['confirm']
 
+        #check if empty
         if not username:
             return 'Please enter a username'
         elif not password:
@@ -159,19 +164,17 @@ def contact():
 @app.route('/upvote', methods=['POST'])
 def upvote():
     if request.method == 'POST':
-        # Get the file ID from the request data
         try:
+            # get data
             data = request.get_json()
             file_id = data['fileId']
             user_id = session["user_id"]
             test = db.execute("SELECT * FROM upvotes WHERE user_id = ? AND image_id = ?", user_id, file_id)
 
-            # Update the SQL table
+            # if test exists do nothing
             if test:
-                print("passed SELECT test")
+                pass
             else:
-                print("failed SELECT test")
-                print(user_id)
                 db.execute("INSERT INTO upvotes(user_id, image_id) VALUES (?, ?)", user_id, file_id)
 
             db.execute("UPDATE images SET upvotes = upvotes + 1 WHERE image_id = ?", file_id)
@@ -179,17 +182,19 @@ def upvote():
             updated_rating = get_image_rating(file_id)
             value = {'rating': updated_rating}
 
-            # Respond with JSON indicating success
+            # respond with json
             return jsonify(value), 200
         except Exception as e:
             return jsonify({'error': str(e)}), 500
 
-
+#add comment to image
 @app.route("/comment", methods=["POST"])
 def add_comment():
+    #get form
     comment = request.form['comment']
     image_id = request.form['comment_id']
 
+    #check if empty
     if not comment:
         return 'empty comment'
     if not image_id:
@@ -197,10 +202,12 @@ def add_comment():
     if not session['user_id']:
         return 'please login'
     
+    #insert into reviews table
     db.execute("INSERT INTO reviews (image_id, user_id, comment) VALUES (?, ?, ?)", image_id, session['user_id'], comment)
 
-    return redirect('/')
+    return redirect('/gallery')
 
+#delete image, only for admins
 @app.route("/delete", methods=["POST"])
 def delete_image():
     del_id = request.form['delete_id']
@@ -212,6 +219,7 @@ def delete_image():
 def image_exist(image):
     return os.path.exists(os.path.join(app.config['UPLOAD_FOLDER'], image))
 
+#check if user already upvoted an image
 def vote_check(id):
     user_id = session["user_id"]
     query = db.execute("SELECT * FROM upvotes WHERE user_id = ? AND image_id = ?", user_id, id)
@@ -219,7 +227,8 @@ def vote_check(id):
         return False
     else:
         return True
-    
+
+#get comments from reviews table for image    
 def get_comment(id):
     query = db.execute("SELECT * FROM reviews WHERE image_id = ?", id)
     if query:
@@ -231,6 +240,15 @@ def get_comment(id):
         return comments
     else:
         return False
+
+# Define a context processor to inject variables into all templates
+@app.context_processor
+def inject_layout():
+    if 'user_id' in session:
+        logged_in = True
+    else:
+        logged_in = False
+    return dict(logged_in=logged_in)
 
 
 #run app as debug

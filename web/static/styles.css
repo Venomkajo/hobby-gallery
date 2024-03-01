@@ -38,7 +38,7 @@ nav /* navbar */
 #indexdiv
 {
     text-align: center;
-    background-color: gainsboro;
+    background-color: darkgoldenrod;
     font-size: x-large;
     
 }
@@ -46,12 +46,8 @@ nav /* navbar */
 body
 {
     margin: 0;
-    background-color: lightcoral;
+    background-color: lightgoldenrodyellow;
     font-family: Arial, sans-serif;
-}
-
-.image-container {
-    margin: 5px;
 }
 
 img
@@ -64,7 +60,7 @@ img
 #submitfile {
     margin: 20px auto;
     padding: 20px;
-    background-color: pink;
+    background-color: darkgoldenrod;
     border-radius: 5px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     text-align: center;
@@ -148,9 +144,30 @@ img
     max-width: 100%;
     height: auto;
     margin-top: 10px;
+    margin-bottom: 10px;
 }
 
-.upvotes
-{
+.image-info {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid black;
+    margin-right: 10px;
+}
+
+.image-container {
+    flex: 1;
+    margin-right: 10px;
+}
+
+.image-container img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+.upvotes {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid black;
     text-align: center;
 }
