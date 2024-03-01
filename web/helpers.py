@@ -14,6 +14,6 @@ def get_image_rating(id):
     rating = db.execute("SELECT upvotes FROM images WHERE image_id = ?", id)
     value = None  # Default value if no rating is found
     for row in rating:
-        value = row  # Get the rating from the first column of the row
+        value = row['upvotes']  # Get the rating from the first column of the row
         break  # Stop looping after the first row
     return value

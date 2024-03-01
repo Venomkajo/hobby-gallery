@@ -12,8 +12,8 @@ app = Flask(__name__)
 db = SQL("sqlite:///gallery.db")
 db.execute("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT, password TEXT)")
 db.execute("CREATE TABLE IF NOT EXISTS images (image_id INTEGER PRIMARY KEY, user_id INTEGER, image TEXT, title TEXT, description TEXT, gender TEXT, upvotes INTEGER DEFAULT 0, FOREIGN KEY (user_id) REFERENCES users(id))")
-db.execute("CREATE TABLE IF NOT EXISTS reviews (review_id INTEGER PRIMARY KEY, image_id INTEGER, user_id INTEGER, comment TEXT, FOREIGN KEY (image_id) REFERENCES images(image_id), FOREIGN KEY (user_id) REFERENCES users(id))")
-db.execute("CREATE TABLE IF NOT EXISTS upvotes (user_id INTEGER, image_id INTEGER, FOREIGN KEY (user_id) REFERENCES users(id), FOREIGN KEY (image_id) REFERENCES images(image_id))")
+db.execute("CREATE TABLE IF NOT EXISTS reviews (review_id INTEGER PRIMARY KEY, image_id INTEGER, user_id INTEGER, comment TEXT, FOREIGN KEY (image_id) REFERENCES images(image_id) ON DELETE CASCADE, FOREIGN KEY (user_id) REFERENCES users(id))")
+db.execute("CREATE TABLE IF NOT EXISTS upvotes (user_id INTEGER, image_id INTEGER, FOREIGN KEY (user_id) REFERENCES users(id), FOREIGN KEY (image_id) REFERENCES images(image_id) ON DELETE CASCADE)")
 
 #make cookies
 app.config["SESSION_PERMANENT"] = True
@@ -200,6 +200,12 @@ def add_comment():
     db.execute("INSERT INTO reviews (image_id, user_id, comment) VALUES (?, ?, ?)", image_id, session['user_id'], comment)
 
     return redirect('/')
+
+@app.route("/delete", methods=["POST"])
+def delete_image():
+    del_id = request.form['delete_id']
+    db.execute("DELETE FROM images WHERE image_id = ?", del_id)
+    return redirect("/")
     
 
 #check if image exists
@@ -219,12 +225,13 @@ def get_comment(id):
     if query:
         comments = []
         for answers in query:
-            username = db.execute("SELECT username FROM users WHERE id = ?", answers['user_id'])
+            username = db.execute("SELECT username FROM users WHERE id = ?", answers['user_id'])[0]['username']
             dictionary = {'comment': answers['comment'], 'username': username}
             comments.append(dictionary)
         return comments
     else:
         return False
+
 
 #run app as debug
 if __name__ == "__main__":

@@ -31,6 +31,12 @@
                             </div>
                         {% endfor %}
                     {% endif %}
+                    {% if file.username == 'admin' %}
+                        <form action="/delete" method="post">
+                            <input hidden value="{{ file.image_id }}" name="delete_id" >
+                            <button type="submit">Delete</button>
+                        </form>
+                    {% endif %}
                 </div>
             </div>
             {% endif %}
