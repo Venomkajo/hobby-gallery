@@ -1,6 +1,6 @@
 # Hobby Horse Gallery
 
-#### Video Demo: placeholder
+#### Video Demo: https://youtu.be/j_l75Gkn9TE
 Online Web Gallery made for CS50's final project.
 
 ## Table of Contents
@@ -54,9 +54,9 @@ Buttons and inputs are styled using CSS in styles.css.
 
 The first registered account has admin privileges that allow for banning users and deleting images.
 
-favicon.png is used for visual reasons.
+favicon.png is used for the icon.
 
 ## Credits
 
-ChatGPT 3.5
-Venomkajo, kajres
+ChatGPT 3.5, 
+Venomkajo: kajres
