@@ -18,7 +18,7 @@
     <div class="gallery">
         {% for file in files %}
         {% if file.image.endswith('.jpg') or file.image.endswith('.jpeg') or file.image.endswith('.png') %}
-            {% if image_exist(file.image) %}
+            {% if image_exist(file.image) and file.banned == 0 %}
             <div class="galleryrow">
                 <div class="image-info">
                     <h2>{{ file.title }}</h2>

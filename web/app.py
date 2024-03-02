@@ -298,9 +298,10 @@ def get_comment(id):
     if query:
         comments = []
         for answers in query:
-            username = db.execute("SELECT username FROM users WHERE id = ?", answers['user_id'])[0]['username']
-            dictionary = {'comment': answers['comment'], 'username': username}
-            comments.append(dictionary)
+            user_info = db.execute("SELECT username, banned FROM users WHERE id = ?", answers['user_id'])[0]
+            if user_info and not user_info['banned']:
+                dictionary = {'comment': answers['comment'], 'username': user_info['username']}
+                comments.append(dictionary)
         return comments
     else:
         return False
